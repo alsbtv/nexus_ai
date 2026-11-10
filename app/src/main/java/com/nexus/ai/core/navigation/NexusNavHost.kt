@@ -11,6 +11,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.compose.NavHost
@@ -37,6 +38,7 @@ fun NexusNavHost() {
                 modifier = Modifier.width(300.dp)
             ) {
                 Spacer(modifier = Modifier.height(48.dp))
+                
                 // New Chat Button
                 Row(
                     modifier = Modifier
@@ -54,9 +56,13 @@ fun NexusNavHost() {
                 
                 Spacer(modifier = Modifier.height(24.dp))
                 HorizontalDivider(color = BorderColor)
-                Spacer(modifier = Modifier.height(16.dp))
                 
-                // Settings row
+                // Spacer with weight pushes the settings to the bottom
+                Spacer(modifier = Modifier.weight(1f))
+                
+                HorizontalDivider(color = BorderColor)
+                
+                // Settings row at the very bottom
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -64,13 +70,14 @@ fun NexusNavHost() {
                             scope.launch { drawerState.close() }
                             navController.navigate(Routes.SETTINGS)
                         }
-                        .padding(horizontal = 24.dp, vertical = 16.dp),
+                        .padding(horizontal = 24.dp, vertical = 20.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Icon(Icons.Outlined.Settings, contentDescription = "Settings", tint = TextSecondary)
                     Spacer(modifier = Modifier.width(16.dp))
-                    Text("Settings", color = TextPrimary, fontSize = 16.sp)
+                    Text("Settings", color = TextPrimary, fontSize = 16.sp, fontWeight = FontWeight.Medium)
                 }
+                Spacer(modifier = Modifier.height(16.dp))
             }
         }
     ) {

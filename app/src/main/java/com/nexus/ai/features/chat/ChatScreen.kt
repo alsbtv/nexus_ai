@@ -57,7 +57,7 @@ fun ChatScreen(
             )
         },
         bottomBar = {
-            // Floating Input Bar Skeleton
+            // Floating Input Bar
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -92,7 +92,7 @@ fun ChatScreen(
                     modifier = Modifier
                         .size(36.dp)
                         .background(AccentBlue, CircleShape)
-                        .alpha(0.4f), // Disabled state
+                        .alpha(0.4f),
                     contentAlignment = Alignment.Center
                 ) {
                     Icon(Icons.Default.ArrowUpward, contentDescription = "Send", tint = Color.White)
@@ -107,10 +107,13 @@ fun ChatScreen(
                 .padding(paddingValues),
             contentAlignment = Alignment.Center
         ) {
+            // نص أكبر وأكثر بياضاً
             Text(
                 text = "How can I help you today?",
-                color = TextSecondary,
-                fontSize = 18.sp
+                color = TextPrimary,
+                fontSize = 24.sp,
+                fontWeight = FontWeight.Medium,
+                letterSpacing = 0.5.sp
             )
         }
     }
