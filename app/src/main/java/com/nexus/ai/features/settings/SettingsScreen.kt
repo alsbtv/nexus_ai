@@ -24,7 +24,7 @@ fun SettingsScreen(onBack: () -> Unit) {
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Settings", color = TextPrimary, fontSize = 20.sp, fontWeight = FontWeight.Bold) },
+                title = { Text("Settings", color = TextPrimary, fontSize = 18.sp, fontWeight = FontWeight.Bold) },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
                         Icon(Icons.Default.ArrowBack, contentDescription = "Back", tint = TextPrimary)
@@ -40,9 +40,8 @@ fun SettingsScreen(onBack: () -> Unit) {
                 .fillMaxSize()
                 .padding(paddingValues)
                 .padding(horizontal = 16.dp),
-            verticalArrangement = Arrangement.spacedBy(24.dp)
+            verticalArrangement = Arrangement.spacedBy(20.dp)
         ) {
-            // PROFILE SECTION
             item {
                 SettingsGroup(title = "Profile") {
                     SettingsRow(title = "Account settings", icon = Icons.Outlined.Person)
@@ -51,7 +50,6 @@ fun SettingsScreen(onBack: () -> Unit) {
                 }
             }
 
-            // APP SECTION
             item {
                 SettingsGroup(title = "App") {
                     SettingsRow(title = "Language", value = "English", icon = Icons.Outlined.Language)
@@ -64,7 +62,6 @@ fun SettingsScreen(onBack: () -> Unit) {
                 }
             }
 
-            // AUDIO SECTION
             item {
                 SettingsGroup(title = "Audio") {
                     SettingsRow(title = "Main language", value = "Use App language", icon = Icons.Outlined.Mic)
@@ -73,7 +70,6 @@ fun SettingsScreen(onBack: () -> Unit) {
                 }
             }
 
-            // ABOUT SECTION
             item {
                 SettingsGroup(title = "About") {
                     SettingsRow(title = "Check for updates", value = "2.7.5(296)", icon = Icons.Outlined.Info)
@@ -84,7 +80,7 @@ fun SettingsScreen(onBack: () -> Unit) {
                 }
             }
             
-            item { Spacer(modifier = Modifier.height(32.dp)) }
+            item { Spacer(modifier = Modifier.height(24.dp)) }
         }
     }
 }
@@ -95,13 +91,13 @@ fun SettingsGroup(title: String, content: @Composable () -> Unit) {
         Text(
             text = title,
             color = TextMuted,
-            fontSize = 13.sp,
+            fontSize = 12.sp,
             fontWeight = FontWeight.Medium,
-            modifier = Modifier.padding(start = 16.dp, bottom = 8.dp)
+            modifier = Modifier.padding(start = 16.dp, bottom = 6.dp)
         )
         Surface(
             color = SecondarySurface,
-            shape = RoundedCornerShape(20.dp),
+            shape = RoundedCornerShape(16.dp),
             modifier = Modifier.fillMaxWidth()
         ) {
             Column {
@@ -117,16 +113,16 @@ fun SettingsRow(title: String, value: String? = null, icon: ImageVector) {
         modifier = Modifier
             .fillMaxWidth()
             .clickable { }
-            .padding(vertical = 18.dp, horizontal = 16.dp),
+            .padding(vertical = 14.dp, horizontal = 16.dp), // تقليل الارتفاع
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Icon(icon, contentDescription = null, tint = TextSecondary, modifier = Modifier.size(24.dp))
+        Icon(icon, contentDescription = null, tint = TextSecondary, modifier = Modifier.size(22.dp)) // أيقونة أصغر قليلاً
         Spacer(modifier = Modifier.width(16.dp))
-        Text(title, color = TextPrimary, fontSize = 16.sp, modifier = Modifier.weight(1f))
+        Text(title, color = TextPrimary, fontSize = 15.sp, modifier = Modifier.weight(1f)) // خط أصغر
         if (value != null) {
-            Text(value, color = TextSecondary, fontSize = 15.sp)
+            Text(value, color = TextSecondary, fontSize = 14.sp)
             Spacer(modifier = Modifier.width(8.dp))
         }
-        Icon(Icons.Default.ChevronRight, contentDescription = null, tint = TextMuted, modifier = Modifier.size(20.dp))
+        Icon(Icons.Default.ChevronRight, contentDescription = null, tint = TextMuted, modifier = Modifier.size(18.dp))
     }
 }
