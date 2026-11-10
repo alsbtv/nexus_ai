@@ -1,7 +1,6 @@
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
-    id("org.jetbrains.kotlin.plugin.compose")
 }
 
 android {
@@ -40,6 +39,12 @@ android {
     buildFeatures {
         compose = true
     }
+    
+    // إعدادات مترجم Compose المتوافقة مع Kotlin 1.9.0
+    composeOptions {
+        kotlinCompilerExtensionVersion = "1.5.1"
+    }
+
     packaging {
         resources {
             excludes += "/META-INF/{AL2.0,LGPL2.1}"
