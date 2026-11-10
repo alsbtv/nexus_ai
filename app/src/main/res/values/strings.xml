@@ -1,0 +1,7 @@
+<resources>
+    <string name="app_name">Nexus</string>
+    <string name="how_can_i_help">How can I help you today?</string>
+    <string name="message_nexus">Message Nexus...</string>
+    <string name="think">Think</string>
+    <string name="settings">Settings</string>
+</resources>
