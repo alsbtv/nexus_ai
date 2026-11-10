@@ -20,67 +20,37 @@ import com.nexus.ai.core.theme.*
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun SettingsScreen(onBack: () -> Unit) {
+fun SettingsScreen(
+    onBack: () -> Unit,
+    onPuterSignIn: () -> Unit,
+    puterState: String = "Not Logged In"
+) {
     Scaffold(
         topBar = {
             TopAppBar(
                 title = { Text("Settings", color = TextPrimary, fontSize = 18.sp, fontWeight = FontWeight.Bold) },
-                navigationIcon = {
-                    IconButton(onClick = onBack) {
-                        Icon(Icons.Default.ArrowBack, contentDescription = "Back", tint = TextPrimary)
-                    }
-                },
+                navigationIcon = { IconButton(onClick = onBack) { Icon(Icons.Default.ArrowBack, "Back", tint = TextPrimary) } },
                 colors = TopAppBarDefaults.topAppBarColors(containerColor = OledBlack)
             )
         },
         containerColor = OledBlack
-    ) { paddingValues ->
-        LazyColumn(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(paddingValues)
-                .padding(horizontal = 16.dp),
-            verticalArrangement = Arrangement.spacedBy(20.dp)
-        ) {
+    ) { padding ->
+        LazyColumn(Modifier.fillMaxSize().padding(padding).padding(horizontal = 16.dp), verticalArrangement = Arrangement.spacedBy(20.dp)) {
             item {
-                SettingsGroup(title = "Profile") {
-                    SettingsRow(title = "Account settings", icon = Icons.Outlined.Person)
+                SettingsGroup(title = "AI & Models") {
+                    SettingsRow(title = "Puter Connection", value = puterState, icon = Icons.Outlined.Cloud, onClick = onPuterSignIn)
                     HorizontalDivider(color = BorderColor, modifier = Modifier.padding(horizontal = 16.dp))
-                    SettingsRow(title = "Data controls", icon = Icons.Outlined.Dataset)
+                    SettingsRow(title = "Model Selection", value = "Auto", icon = Icons.Outlined.Star)
                 }
             }
-
             item {
                 SettingsGroup(title = "App") {
                     SettingsRow(title = "Language", value = "English", icon = Icons.Outlined.Language)
                     HorizontalDivider(color = BorderColor, modifier = Modifier.padding(horizontal = 16.dp))
                     SettingsRow(title = "Appearance", value = "Dark", icon = Icons.Outlined.DarkMode)
-                    HorizontalDivider(color = BorderColor, modifier = Modifier.padding(horizontal = 16.dp))
-                    SettingsRow(title = "Font size", icon = Icons.Outlined.TextFields)
-                    HorizontalDivider(color = BorderColor, modifier = Modifier.padding(horizontal = 16.dp))
-                    SettingsRow(title = "Personalization", icon = Icons.Outlined.Brush)
                 }
             }
-
-            item {
-                SettingsGroup(title = "Audio") {
-                    SettingsRow(title = "Main language", value = "Use App language", icon = Icons.Outlined.Mic)
-                    HorizontalDivider(color = BorderColor, modifier = Modifier.padding(horizontal = 16.dp))
-                    SettingsRow(title = "Voice", icon = Icons.Outlined.VolumeUp)
-                }
-            }
-
-            item {
-                SettingsGroup(title = "About") {
-                    SettingsRow(title = "Check for updates", value = "2.7.5(296)", icon = Icons.Outlined.Info)
-                    HorizontalDivider(color = BorderColor, modifier = Modifier.padding(horizontal = 16.dp))
-                    SettingsRow(title = "Service agreement", icon = Icons.Outlined.Description)
-                    HorizontalDivider(color = BorderColor, modifier = Modifier.padding(horizontal = 16.dp))
-                    SettingsRow(title = "Help & Feedback", icon = Icons.Outlined.HelpOutline)
-                }
-            }
-            
-            item { Spacer(modifier = Modifier.height(24.dp)) }
+            item { Spacer(Modifier.height(24.dp)) }
         }
     }
 }
@@ -88,41 +58,18 @@ fun SettingsScreen(onBack: () -> Unit) {
 @Composable
 fun SettingsGroup(title: String, content: @Composable () -> Unit) {
     Column {
-        Text(
-            text = title,
-            color = TextMuted,
-            fontSize = 12.sp,
-            fontWeight = FontWeight.Medium,
-            modifier = Modifier.padding(start = 16.dp, bottom = 6.dp)
-        )
-        Surface(
-            color = SecondarySurface,
-            shape = RoundedCornerShape(16.dp),
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            Column {
-                content()
-            }
-        }
+        Text(title, color = TextMuted, fontSize = 12.sp, fontWeight = FontWeight.Medium, modifier = Modifier.padding(start = 16.dp, bottom = 6.dp))
+        Surface(color = SecondarySurface, shape = RoundedCornerShape(16.dp), modifier = Modifier.fillMaxWidth()) { Column { content() } }
     }
 }
 
 @Composable
-fun SettingsRow(title: String, value: String? = null, icon: ImageVector) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable { }
-            .padding(vertical = 14.dp, horizontal = 16.dp), // تقليل الارتفاع
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Icon(icon, contentDescription = null, tint = TextSecondary, modifier = Modifier.size(22.dp)) // أيقونة أصغر قليلاً
-        Spacer(modifier = Modifier.width(16.dp))
-        Text(title, color = TextPrimary, fontSize = 15.sp, modifier = Modifier.weight(1f)) // خط أصغر
-        if (value != null) {
-            Text(value, color = TextSecondary, fontSize = 14.sp)
-            Spacer(modifier = Modifier.width(8.dp))
-        }
-        Icon(Icons.Default.ChevronRight, contentDescription = null, tint = TextMuted, modifier = Modifier.size(18.dp))
+fun SettingsRow(title: String, value: String? = null, icon: ImageVector, onClick: () -> Unit = {}) {
+    Row(Modifier.fillMaxWidth().clickable { onClick() }.padding(vertical = 14.dp, horizontal = 16.dp), verticalAlignment = Alignment.CenterVertically) {
+        Icon(icon, null, tint = TextSecondary, modifier = Modifier.size(22.dp))
+        Spacer(Modifier.width(16.dp))
+        Text(title, color = TextPrimary, fontSize = 15.sp, modifier = Modifier.weight(1f))
+        if (value != null) { Text(value, color = TextSecondary, fontSize = 14.sp); Spacer(Modifier.width(8.dp)) }
+        Icon(Icons.Default.ChevronRight, null, tint = TextMuted, modifier = Modifier.size(18.dp))
     }
 }
