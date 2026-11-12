@@ -25,24 +25,17 @@ import androidx.navigation.compose.rememberNavController
 import com.nexus.ai.core.puter.PuterEngine
 import com.nexus.ai.core.theme.*
 import com.nexus.ai.features.chat.ChatScreen
+import com.nexus.ai.features.chat.ChatViewModel
 import com.nexus.ai.features.settings.SettingsScreen
 import kotlinx.coroutines.launch
 
-data class ChatHistory(val title: String, val isPinned: Boolean, val timeGroup: String)
-
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun NexusNavHost(puterEngine: PuterEngine, onPuterSignIn: () -> Unit) {
+fun NexusNavHost(viewModel: ChatViewModel, puterEngine: PuterEngine, onPuterSignIn: () -> Unit) {
     val navController = rememberNavController()
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
     val scope = rememberCoroutineScope()
     var expandedMenuId by remember { mutableStateOf<String?>(null) }
-
-    val history = listOf(
-        ChatHistory("هل نحن وحدنا ؟", true, "Pinned"),
-        ChatHistory("البداية لا النهاية", false, "Yesterday"),
-        ChatHistory("استلام مخطط Nexus", false, "Yesterday")
-    )
 
     ModalNavigationDrawer(
         drawerState = drawerState,
@@ -56,31 +49,20 @@ fun NexusNavHost(puterEngine: PuterEngine, onPuterSignIn: () -> Unit) {
                 }
                 Spacer(Modifier.height(16.dp))
                 
+                // بيانات حقيقية قادمة من Room DB لاحقاً (مؤقتاً فارغة)
                 LazyColumn(Modifier.weight(1f)) {
-                    history.groupBy { it.timeGroup }.forEach { (group, chats) ->
-                        item { Text(group, color = TextMuted, fontSize = 12.sp, modifier = Modifier.padding(start = 16.dp, top = 16.dp, bottom = 8.dp)) }
-                        items(chats) { chat ->
-                            Box {
-                                Row(Modifier.fillMaxWidth().clickable { scope.launch { drawerState.close() } }.padding(horizontal = 16.dp, vertical = 12.dp), verticalAlignment = Alignment.CenterVertically) {
-                                    Text(chat.title, color = TextPrimary, fontSize = 14.sp, modifier = Modifier.weight(1f), maxLines = 1)
-                                    IconButton(onClick = { expandedMenuId = chat.title }) {
-                                        Icon(Icons.Default.MoreVert, "Options", tint = TextMuted, modifier = Modifier.size(20.dp))
-                                    }
-                                }
-                                DropdownMenu(
-                                    expanded = expandedMenuId == chat.title,
-                                    onDismissRequest = { expandedMenuId = null },
-                                    properties = PopupProperties(focusable = true)
-                                ) {
-                                    DropdownMenuItem(text = { Text("Rename") }, onClick = { expandedMenuId = null })
-                                    DropdownMenuItem(text = { Text("Delete", color = MaterialTheme.colorScheme.error) }, onClick = { expandedMenuId = null })
-                                }
-                            }
+                    item {
+                        Box(Modifier.fillMaxWidth().padding(32.dp), contentAlignment = Alignment.Center) {
+                            Text("No chats yet", color = TextMuted, fontSize = 14.sp)
                         }
                     }
                 }
+                
                 HorizontalDivider(color = BorderColor)
-                Row(Modifier.fillMaxWidth().clickable { scope.launch { drawerState.close() }; navController.navigate(Routes.SETTINGS) }.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
+                Row(
+                    Modifier.fillMaxWidth().clickable { scope.launch { drawerState.close() }; navController.navigate(Routes.SETTINGS) }.padding(16.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
                     Box(Modifier.size(32.dp).clip(CircleShape).background(AccentBlue), contentAlignment = Alignment.Center) {
                         Text("W", color = TextPrimary, fontWeight = FontWeight.Bold, fontSize = 14.sp)
                     }
@@ -93,9 +75,9 @@ fun NexusNavHost(puterEngine: PuterEngine, onPuterSignIn: () -> Unit) {
         NavHost(navController = navController, startDestination = Routes.CHAT, modifier = Modifier.fillMaxSize()) {
             composable(Routes.CHAT) {
                 ChatScreen(
-                    onMenuClick = { scope.launch { drawerState.open() } },
-                    onModelClick = { /* TODO: Model Sheet */ },
-                    currentModel = "Auto"
+                    viewModel = viewModel,
+                    puterEngine = puterEngine,
+                    onMenuClick = { scope.launch { drawerState.open() } }
                 )
             }
             composable(Routes.SETTINGS) {
