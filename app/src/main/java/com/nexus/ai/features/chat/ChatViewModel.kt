@@ -28,17 +28,30 @@ class ChatViewModel : ViewModel() {
     val messages = mutableStateListOf<ChatMessage>()
     var inputText by mutableStateOf("")
     var currentModel by mutableStateOf("Auto")
-    var thinkingLevel by mutableStateOf("Medium") // Fast, Medium, Deep
+    var thinkingLevel by mutableStateOf("Medium")
     var isLoading by mutableStateOf(false)
 
     private fun setupPuter() {
         puterEngine?.let { engine ->
             viewModelScope.launch {
+                // جمع الردود (Streaming)
                 engine.chatStream.collect { chunk ->
                     if (messages.isNotEmpty()) {
                         val lastMsg = messages.last()
                         if (!lastMsg.isUser) {
                             messages[messages.lastIndex] = lastMsg.copy(text = lastMsg.text + chunk)
+                        }
+                    }
+                }
+            }
+            viewModelScope.launch {
+                // مراقبة حالة الكتابة
+                engine.isTyping.collect { typing ->
+                    isLoading = typing
+                    if (!typing) {
+                        // إزالة الرسالة الفارغة إذا فشل الاتصال
+                        if (messages.lastOrNull()?.text?.isEmpty() == true && messages.lastOrNull()?.isUser == false) {
+                            messages.removeAt(messages.lastIndex)
                         }
                     }
                 }
@@ -61,24 +74,9 @@ class ChatViewModel : ViewModel() {
         messages.add(ChatMessage(text = text, isUser = true))
         messages.add(ChatMessage(text = "", isUser = false))
         inputText = ""
-        isLoading = true
-
-        val modelId = if (currentModel == "Auto") "gpt-4o-mini" else currentModel
         
-        viewModelScope.launch {
-            // نقوم بإرسال الرسالة عبر PuterEngine
-            puterEngine?.sendMessage(text, modelId, getTemperature())
-            // مراقبة حالة الكتابة من المحرك
-            puterEngine?.isTyping?.collect { typing ->
-                if (!typing) {
-                    isLoading = false
-                    // إزالة الرسالة الفارغة إذا فشل الاتصال
-                    if (messages.lastOrNull()?.text?.isEmpty() == true && !messages.lastOrNull()!!.isUser) {
-                        messages.removeAt(messages.lastIndex)
-                    }
-                }
-            }
-        }
+        val modelId = if (currentModel == "Auto") "gpt-4o-mini" else currentModel
+        puterEngine?.sendMessage(text, modelId, getTemperature())
     }
 
     fun updateModel(model: PuterModel) {

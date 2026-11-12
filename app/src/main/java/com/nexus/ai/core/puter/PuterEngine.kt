@@ -1,12 +1,15 @@
-import android.os.Message
 package com.nexus.ai.core.puter
 
 import android.annotation.SuppressLint
 import android.app.Dialog
 import android.content.Context
 import android.graphics.Color
+import android.os.Message
 import android.view.ViewGroup
-import android.webkit.*
+import android.webkit.JavascriptInterface
+import android.webkit.WebChromeClient
+import android.webkit.WebView
+import android.webkit.WebViewClient
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -125,7 +128,6 @@ class PuterEngine(private val context: Context) {
             settings.setSupportMultipleWindows(true)
             webChromeClient = object : WebChromeClient() {
                 override fun onCreateWindow(view: WebView?, isDialog: Boolean, isUserGesture: Boolean, resultMsg: Message?): Boolean {
-                    // نسمح بفتح النافذة داخل نفس الـ WebView لضمان عدم انغلاقها
                     val newWebView = WebView(context)
                     val transport = resultMsg?.obj as WebView.WebViewTransport
                     transport.webView = newWebView
