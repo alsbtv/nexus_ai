@@ -64,23 +64,37 @@ class PuterEngine(private val context: Context) {
                 get: function() { return { isActive: true, hasBeenActive: true }; }
             });
             function checkAuth() {
+                if (typeof puter === 'undefined') {
+                    AndroidBridge.onAuthState("Puter Loading...");
+                    return;
+                }
                 puter.auth.getUser().then(user => {
                     AndroidBridge.onAuthState(user ? "Logged In: " + user.username : "Not Logged In");
                 }).catch(e => AndroidBridge.onAuthState("Not Logged In"));
             }
             function fetchModels() {
+                if (typeof puter === 'undefined') return;
                 puter.ai.listModels().then(models => {
                     AndroidBridge.onModelsReceived(JSON.stringify(models));
                 }).catch(e => console.error(e));
             }
             async function sendMessage(base64Prompt, model, temp) {
+                if (typeof puter === 'undefined') {
+                    AndroidBridge.onStreamError("Puter SDK not loaded");
+                    return;
+                }
                 try {
-                    const prompt = atob(base64Prompt); // فك التشفير
-                    const resp = await puter.ai.chat(prompt, { model: model, temperature: parseFloat(temp), stream: true });
-                    for await (const part of resp) {
-                        if (part?.text) {
-                            AndroidBridge.onStreamChunk(part.text);
-                        }
+                    const prompt = atob(base64Prompt);
+                    // التبديل إلى stream: false لتجنب مشكلة التعليق
+                    const resp = await puter.ai.chat(prompt, { model: model, temperature: parseFloat(temp), stream: false });
+                    if (typeof resp === 'string') {
+                        AndroidBridge.onStreamChunk(resp);
+                    } else if (resp && resp.message && resp.message.content) {
+                        AndroidBridge.onStreamChunk(resp.message.content);
+                    } else if (resp && resp.text) {
+                        AndroidBridge.onStreamChunk(resp.text);
+                    } else {
+                        AndroidBridge.onStreamChunk(JSON.stringify(resp));
                     }
                     AndroidBridge.onStreamComplete();
                 } catch (e) {
@@ -121,7 +135,6 @@ class PuterEngine(private val context: Context) {
 
     fun sendMessage(prompt: String, model: String, temp: Double) {
         _isTyping.value = true
-        // تشفير النص بـ Base64 لتجنب أخطاء علامات الاقتباس
         val base64Prompt = Base64.encodeToString(prompt.toByteArray(Charsets.UTF_8), Base64.NO_WRAP)
         hiddenWebView?.evaluateJavascript("sendMessage('$base64Prompt', '$model', $temp)", null)
     }
@@ -150,7 +163,7 @@ class PuterEngine(private val context: Context) {
                     view?.evaluateJavascript("""
                         setInterval(() => {
                             if (typeof puter !== 'undefined' && puter.auth) {
-                                puter.auth.isLoggedIn().then(loggedIn => {
+                                puter.auth.isSignedIn().then(loggedIn => {
                                     if (loggedIn) AndroidBridge.onLoginSuccess();
                                 }).catch(e => {});
                             }

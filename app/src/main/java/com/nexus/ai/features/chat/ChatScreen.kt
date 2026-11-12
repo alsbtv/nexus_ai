@@ -35,7 +35,7 @@ fun ChatScreen(
     var showModelSheet by remember { mutableStateOf(false) }
     
     Scaffold(
-        modifier = Modifier.imePadding(), // رفع الشاشة كاملة مع الكيبورد
+        modifier = Modifier.imePadding(),
         topBar = {
             Row(
                 modifier = Modifier.fillMaxWidth().padding(top = 40.dp, bottom = 8.dp, start = 4.dp, end = 8.dp),
@@ -112,7 +112,6 @@ fun ChatScreen(
             } else {
                 LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(16.dp), verticalArrangement = Arrangement.spacedBy(24.dp)) {
                     items(viewModel.messages) { msg -> 
-                        // لا تظهر الرسالة إذا كانت فارغة (بانتظار الرد)
                         if (msg.isUser || msg.text.isNotEmpty()) {
                             MessageItem(msg)
                         }
@@ -187,7 +186,6 @@ fun MessageItem(message: ChatMessage) {
             }
             Text(message.text, color = TextPrimary, fontSize = 15.sp, lineHeight = 24.sp)
             
-            // الأزرار تظهر فقط إذا اكتمل النص
             if (message.text.isNotEmpty()) {
                 Spacer(modifier = Modifier.height(12.dp))
                 Row(verticalAlignment = Alignment.CenterVertically) {

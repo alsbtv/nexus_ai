@@ -8,6 +8,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.nexus.ai.core.puter.PuterEngine
 import com.nexus.ai.core.puter.PuterModel
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.util.UUID
 
@@ -53,7 +54,6 @@ class ChatViewModel : ViewModel() {
                 engine.isTyping.collect { typing ->
                     isLoading = typing
                     if (!typing) {
-                        // إذا انتهى التحميل ولم يتم إضافة أي رد
                         if (isFirstChunk && messages.isNotEmpty() && !messages.last().isUser) {
                             messages.removeAt(messages.lastIndex)
                         }
@@ -76,13 +76,23 @@ class ChatViewModel : ViewModel() {
         if (text.isEmpty() || isLoading) return
         
         messages.add(ChatMessage(text = text, isUser = true))
-        // إضافة رسالة فارغة مؤقتة (لن تظهر أزرارها بفضل التعديل في ChatScreen)
         messages.add(ChatMessage(text = "", isUser = false))
         inputText = ""
         isFirstChunk = true
         
         val modelId = if (currentModel == "Auto") "gpt-4o-mini" else currentModel
         puterEngine?.sendMessage(text, modelId, getTemperature())
+
+        // مؤقت أمان: إذا لم يصل أي رد خلال 30 ثانية، يتم إلغاء التحميل
+        viewModelScope.launch {
+            delay(30000)
+            if (isLoading && isFirstChunk) {
+                isLoading = false
+                if (messages.isNotEmpty() && !messages.last().isUser) {
+                    messages.removeAt(messages.lastIndex)
+                }
+            }
+        }
     }
 
     fun updateModel(model: PuterModel) {
