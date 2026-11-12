@@ -35,6 +35,7 @@ fun ChatScreen(
     var showModelSheet by remember { mutableStateOf(false) }
     
     Scaffold(
+        modifier = Modifier.imePadding(), // رفع الشاشة كاملة مع الكيبورد
         topBar = {
             Row(
                 modifier = Modifier.fillMaxWidth().padding(top = 40.dp, bottom = 8.dp, start = 4.dp, end = 8.dp),
@@ -54,54 +55,48 @@ fun ChatScreen(
             }
         },
         bottomBar = {
-            Column(
+            Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .imePadding()
                     .padding(horizontal = 16.dp, vertical = 12.dp)
+                    .background(SecondarySurface, RoundedCornerShape(24.dp))
+                    .padding(horizontal = 16.dp, vertical = 10.dp),
+                verticalAlignment = Alignment.CenterVertically
             ) {
+                BasicTextField(
+                    value = viewModel.inputText,
+                    onValueChange = { viewModel.inputText = it },
+                    textStyle = TextStyle(color = TextPrimary, fontSize = 16.sp),
+                    modifier = Modifier.weight(1f),
+                    decorationBox = { innerTextField ->
+                        if (viewModel.inputText.isEmpty()) {
+                            Text("Type a message...", color = TextMuted, fontSize = 16.sp)
+                        }
+                        innerTextField()
+                    }
+                )
+                Spacer(modifier = Modifier.width(8.dp))
                 Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .background(SecondarySurface, RoundedCornerShape(24.dp))
-                        .padding(horizontal = 16.dp, vertical = 10.dp),
+                    modifier = Modifier.clip(RoundedCornerShape(16.dp)).clickable {
+                        viewModel.updateThinkingLevel(
+                            when(viewModel.thinkingLevel) {
+                                "Fast" -> "Medium"
+                                "Medium" -> "Deep"
+                                else -> "Fast"
+                            }
+                        )
+                    }.background(ElevatedSurface).padding(horizontal = 10.dp, vertical = 6.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    BasicTextField(
-                        value = viewModel.inputText,
-                        onValueChange = { viewModel.inputText = it },
-                        textStyle = TextStyle(color = TextPrimary, fontSize = 16.sp),
-                        modifier = Modifier.weight(1f),
-                        decorationBox = { innerTextField ->
-                            if (viewModel.inputText.isEmpty()) {
-                                Text("Type a message...", color = TextMuted, fontSize = 16.sp)
-                            }
-                            innerTextField()
-                        }
-                    )
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Row(
-                        modifier = Modifier.clip(RoundedCornerShape(16.dp)).clickable {
-                            viewModel.updateThinkingLevel(
-                                when(viewModel.thinkingLevel) {
-                                    "Fast" -> "Medium"
-                                    "Medium" -> "Deep"
-                                    else -> "Fast"
-                                }
-                            )
-                        }.background(ElevatedSurface).padding(horizontal = 10.dp, vertical = 6.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Text("✦ ${viewModel.thinkingLevel}", color = AccentBlue, fontSize = 13.sp)
+                    Text("✦ ${viewModel.thinkingLevel}", color = AccentBlue, fontSize = 13.sp)
+                }
+                Spacer(modifier = Modifier.width(12.dp))
+                if (viewModel.inputText.isNotBlank()) {
+                    IconButton(onClick = { viewModel.sendMessage() }) {
+                        Icon(Icons.Default.Send, "Send", tint = AccentBlue)
                     }
-                    Spacer(modifier = Modifier.width(12.dp))
-                    if (viewModel.inputText.isNotBlank()) {
-                        IconButton(onClick = { viewModel.sendMessage() }) {
-                            Icon(Icons.Default.Send, "Send", tint = AccentBlue)
-                        }
-                    } else {
-                        Icon(Icons.Outlined.Add, "Attach", tint = TextSecondary, modifier = Modifier.size(26.dp))
-                    }
+                } else {
+                    Icon(Icons.Outlined.Add, "Attach", tint = TextSecondary, modifier = Modifier.size(26.dp))
                 }
             }
         },
@@ -116,7 +111,12 @@ fun ChatScreen(
                 }
             } else {
                 LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(16.dp), verticalArrangement = Arrangement.spacedBy(24.dp)) {
-                    items(viewModel.messages) { msg -> MessageItem(msg) }
+                    items(viewModel.messages) { msg -> 
+                        // لا تظهر الرسالة إذا كانت فارغة (بانتظار الرد)
+                        if (msg.isUser || msg.text.isNotEmpty()) {
+                            MessageItem(msg)
+                        }
+                    }
                     if (viewModel.isLoading) {
                         item {
                             Row(verticalAlignment = Alignment.CenterVertically) {
@@ -186,15 +186,19 @@ fun MessageItem(message: ChatMessage) {
                 Spacer(modifier = Modifier.height(8.dp))
             }
             Text(message.text, color = TextPrimary, fontSize = 15.sp, lineHeight = 24.sp)
-            Spacer(modifier = Modifier.height(12.dp))
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Icon(Icons.Outlined.ContentCopy, "Copy", tint = TextMuted, modifier = Modifier.size(20.dp))
-                Spacer(modifier = Modifier.width(16.dp))
-                Icon(Icons.Outlined.ThumbUp, "Like", tint = TextMuted, modifier = Modifier.size(20.dp))
-                Spacer(modifier = Modifier.width(16.dp))
-                Icon(Icons.Outlined.ThumbDown, "Dislike", tint = TextMuted, modifier = Modifier.size(20.dp))
-                Spacer(modifier = Modifier.width(16.dp))
-                Icon(Icons.Outlined.VolumeUp, "Speak", tint = TextMuted, modifier = Modifier.size(20.dp))
+            
+            // الأزرار تظهر فقط إذا اكتمل النص
+            if (message.text.isNotEmpty()) {
+                Spacer(modifier = Modifier.height(12.dp))
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(Icons.Outlined.ContentCopy, "Copy", tint = TextMuted, modifier = Modifier.size(20.dp))
+                    Spacer(modifier = Modifier.width(16.dp))
+                    Icon(Icons.Outlined.ThumbUp, "Like", tint = TextMuted, modifier = Modifier.size(20.dp))
+                    Spacer(modifier = Modifier.width(16.dp))
+                    Icon(Icons.Outlined.ThumbDown, "Dislike", tint = TextMuted, modifier = Modifier.size(20.dp))
+                    Spacer(modifier = Modifier.width(16.dp))
+                    Icon(Icons.Outlined.VolumeUp, "Speak", tint = TextMuted, modifier = Modifier.size(20.dp))
+                }
             }
         }
     }

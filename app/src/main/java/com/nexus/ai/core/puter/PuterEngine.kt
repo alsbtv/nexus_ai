@@ -5,6 +5,7 @@ import android.app.Dialog
 import android.content.Context
 import android.graphics.Color
 import android.os.Message
+import android.util.Base64
 import android.view.ViewGroup
 import android.webkit.JavascriptInterface
 import android.webkit.WebChromeClient
@@ -72,8 +73,9 @@ class PuterEngine(private val context: Context) {
                     AndroidBridge.onModelsReceived(JSON.stringify(models));
                 }).catch(e => console.error(e));
             }
-            async function sendMessage(prompt, model, temp) {
+            async function sendMessage(base64Prompt, model, temp) {
                 try {
+                    const prompt = atob(base64Prompt); // فك التشفير
                     const resp = await puter.ai.chat(prompt, { model: model, temperature: parseFloat(temp), stream: true });
                     for await (const part of resp) {
                         if (part?.text) {
@@ -107,6 +109,11 @@ class PuterEngine(private val context: Context) {
             _chatStream.tryEmit("\n[Error: $error]")
             _isTyping.value = false 
         }
+        @JavascriptInterface fun onLoginSuccess() {
+            loginDialog?.dismiss()
+            checkAuth()
+            fetchModels()
+        }
     }
 
     fun checkAuth() { hiddenWebView?.evaluateJavascript("checkAuth()", null) }
@@ -114,8 +121,9 @@ class PuterEngine(private val context: Context) {
 
     fun sendMessage(prompt: String, model: String, temp: Double) {
         _isTyping.value = true
-        val safePrompt = prompt.replace("\\", "\\\\").replace("'", "\\'").replace("\n", "\\n")
-        hiddenWebView?.evaluateJavascript("sendMessage('$safePrompt', '$model', $temp)", null)
+        // تشفير النص بـ Base64 لتجنب أخطاء علامات الاقتباس
+        val base64Prompt = Base64.encodeToString(prompt.toByteArray(Charsets.UTF_8), Base64.NO_WRAP)
+        hiddenWebView?.evaluateJavascript("sendMessage('$base64Prompt', '$model', $temp)", null)
     }
 
     @SuppressLint("SetJavaScriptEnabled")
@@ -138,11 +146,16 @@ class PuterEngine(private val context: Context) {
             webViewClient = object : WebViewClient() {
                 override fun onPageFinished(view: WebView?, url: String?) {
                     super.onPageFinished(view, url)
-                    if (url?.contains("dashboard") == true || url?.contains("nexus.ai") == true) {
-                        loginDialog?.dismiss()
-                        checkAuth()
-                        fetchModels()
-                    }
+                    // حقن كود للتحقق من تسجيل الدخول وإغلاق النافذة تلقائياً
+                    view?.evaluateJavascript("""
+                        setInterval(() => {
+                            if (typeof puter !== 'undefined' && puter.auth) {
+                                puter.auth.isLoggedIn().then(loggedIn => {
+                                    if (loggedIn) AndroidBridge.onLoginSuccess();
+                                }).catch(e => {});
+                            }
+                        }, 1500);
+                    """, null)
                 }
             }
             loadUrl("https://puter.com/action/sign-in")

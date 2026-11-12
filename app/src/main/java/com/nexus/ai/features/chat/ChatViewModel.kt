@@ -30,27 +30,31 @@ class ChatViewModel : ViewModel() {
     var currentModel by mutableStateOf("Auto")
     var thinkingLevel by mutableStateOf("Medium")
     var isLoading by mutableStateOf(false)
+    private var isFirstChunk = true
 
     private fun setupPuter() {
         puterEngine?.let { engine ->
             viewModelScope.launch {
-                // جمع الردود (Streaming)
                 engine.chatStream.collect { chunk ->
                     if (messages.isNotEmpty()) {
                         val lastMsg = messages.last()
                         if (!lastMsg.isUser) {
-                            messages[messages.lastIndex] = lastMsg.copy(text = lastMsg.text + chunk)
+                            if (isFirstChunk) {
+                                messages[messages.lastIndex] = lastMsg.copy(text = chunk)
+                                isFirstChunk = false
+                            } else {
+                                messages[messages.lastIndex] = lastMsg.copy(text = lastMsg.text + chunk)
+                            }
                         }
                     }
                 }
             }
             viewModelScope.launch {
-                // مراقبة حالة الكتابة
                 engine.isTyping.collect { typing ->
                     isLoading = typing
                     if (!typing) {
-                        // إزالة الرسالة الفارغة إذا فشل الاتصال
-                        if (messages.lastOrNull()?.text?.isEmpty() == true && messages.lastOrNull()?.isUser == false) {
+                        // إذا انتهى التحميل ولم يتم إضافة أي رد
+                        if (isFirstChunk && messages.isNotEmpty() && !messages.last().isUser) {
                             messages.removeAt(messages.lastIndex)
                         }
                     }
@@ -72,8 +76,10 @@ class ChatViewModel : ViewModel() {
         if (text.isEmpty() || isLoading) return
         
         messages.add(ChatMessage(text = text, isUser = true))
+        // إضافة رسالة فارغة مؤقتة (لن تظهر أزرارها بفضل التعديل في ChatScreen)
         messages.add(ChatMessage(text = "", isUser = false))
         inputText = ""
+        isFirstChunk = true
         
         val modelId = if (currentModel == "Auto") "gpt-4o-mini" else currentModel
         puterEngine?.sendMessage(text, modelId, getTemperature())
